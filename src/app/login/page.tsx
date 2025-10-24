@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import Link from 'next/link';
+import AnimatedBackground from '@/components/ui/animated-background';
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -60,8 +61,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-full max-w-sm animate-in fade-in-0 slide-in-from-bottom-12 duration-500">
+    <div className="flex items-center justify-center min-h-screen bg-background relative overflow-hidden">
+      <AnimatedBackground />
+      <Card className="w-full max-w-sm animate-in fade-in-0 slide-in-from-bottom-12 duration-500 z-10 bg-card/80 backdrop-blur-sm">
         <CardHeader className="space-y-1 text-center">
           <div className='flex justify-center pb-4'>
             <Logo />
@@ -81,7 +83,7 @@ export default function LoginPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
+                <span className="bg-card/80 px-2 text-muted-foreground">
                   Or continue with
                 </span>
               </div>

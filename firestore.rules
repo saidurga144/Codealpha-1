@@ -1,0 +1,73 @@
+/**
+ * @fileoverview Firestore Security Rules for Packet Detective application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model, where each user can only access their own data.
+ *
+ * Data Structure:
+ * All data is nested under `/users/{userId}`, creating a private data tree for each user.
+ *
+ * Key Security Decisions:
+ * - Users cannot list other user's profiles.
+ * - All write operations require authentication.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to individual user documents.
+     * @path /users/{userId}
+     * @allow (get) Signed-in user can retrieve their own profile.
+     *   Example: `auth.uid` = "user123", `userId` = "user123"
+     * @deny (get) Signed-in user cannot retrieve another user's profile.
+     *   Example: `auth.uid` = "user456", `userId` = "user123"
+     * @allow (create) Signed-in user can create their own profile.
+     *   Example: `auth.uid` = "user123", `userId` = "user123"
+     * @deny (create) Signed-in user cannot create a profile with a mismatched ID.
+     *   Example: `auth.uid` = "user456", `userId` = "user123"
+     * @allow (update) Signed-in user can update their own profile.
+     *   Example: `auth.uid` = "user123", `userId` = "user123"
+     * @deny (update) Signed-in user cannot update another user's profile.
+     *   Example: `auth.uid` = "user456", `userId` = "user123"
+     * @deny (delete) Signed-in user cannot delete another user's profile.
+     *   Example: `auth.uid` = "user456", `userId` = "user123"
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    // --- Helper Functions ---
+
+    /**
+     * @description Checks if the user is signed in.
+     * @return {bool} True if the user is authenticated, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the request is made by the owner of the resource.
+     * @param {string} userId - The user ID from the path.
+     * @return {bool} True if the request is made by the owner, false otherwise.
+     */
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the request is made by the owner of the resource and the resource exists.
+     * @param {string} userId - The user ID from the path.
+     * @return {bool} True if the request is made by the owner and the resource exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+  }
+}

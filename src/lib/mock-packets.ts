@@ -69,7 +69,7 @@ export const generateMockPacket = (): Packet => {
 
   return {
     id: `pkt-${packetId++}`,
-    timestamp: new Date().toISOString().split('T')[1].replace('Z',''),
+    timestamp: new Date().toLocaleTimeString(),
     src,
     dst,
     protocol,

@@ -50,12 +50,10 @@ export default function SignUpPage() {
 
   const handleGoogleSignIn = () => {
     setError(null);
-    try {
-      initiateGoogleSignIn(auth);
-      router.push('/');
-    } catch (err: any) {
-      setError(err.message);
-    }
+    // initiateGoogleSignIn handles its own errors internally.
+    initiateGoogleSignIn(auth);
+    // The onAuthStateChanged listener in FirebaseProvider will redirect on success.
+    router.push('/');
   };
 
   return (

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
 import { Packet } from "@/lib/types";
 import { generateMockPacket } from "@/lib/mock-packets";
 import { PacketTable } from "@/components/dashboard/packet-table";
@@ -12,14 +14,24 @@ import { Search } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UserNav } from "@/components/dashboard/user-nav";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Home() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const [packets, setPackets] = useState<Packet[]>([]);
   const [selectedPacket, setSelectedPacket] = useState<Packet | null>(null);
   const [isCapturing, setIsCapturing] = useState<boolean>(true);
   const [filter, setFilter] = useState<string>("");
   const isMobile = useIsMobile();
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+  
   useEffect(() => {
     // Pre-populate with a few packets
     setPackets(Array.from({ length: 20 }, generateMockPacket));
@@ -86,6 +98,24 @@ export default function Home() {
     </div>
   );
 
+  if (isUserLoading || !user) {
+    return (
+       <div className="min-h-screen flex flex-col">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+          <Logo />
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold">Packet Detective</h1>
+          </div>
+        </header>
+        <main className="flex-1 p-4 md:p-6">
+          <div className="flex justify-center items-center h-full">
+             <Skeleton className="h-96 w-full" />
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <TooltipProvider>
       <div className="min-h-screen flex flex-col">
@@ -103,6 +133,7 @@ export default function Home() {
               filter={filter}
               onFilterChange={setFilter}
             />
+            <UserNav />
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6 flex flex-col md:flex-row gap-6">

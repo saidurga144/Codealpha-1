@@ -26,7 +26,7 @@ export function UserNav() {
 
   const handleSignOut = () => {
     auth.signOut()
-    router.push('/login')
+    router.push('/')
   }
 
   if (!user) return null

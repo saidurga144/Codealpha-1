@@ -15,7 +15,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/login');
+      router.push('/');
     }
   }, [user, isUserLoading, router]);
 
@@ -58,7 +58,7 @@ export default function ProfilePage() {
               <p className="text-muted-foreground">{user.email}</p>
             </div>
           </div>
-          <Button onClick={() => router.push('/')} className="w-full">
+          <Button onClick={() => router.push('/dashboard')} className="w-full">
             Back to Dashboard
           </Button>
         </CardContent>

@@ -1,173 +1,142 @@
-"use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+'use client';
+
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
-import { Packet } from "@/lib/types";
-import { generateMockPacket } from "@/lib/mock-packets";
-import { PacketTable } from "@/components/dashboard/packet-table";
-import { PacketDetail } from "@/components/dashboard/packet-detail";
-import { Toolbar } from "@/components/dashboard/toolbar";
+import { useAuth, useUser, initiateEmailSignIn, initiateGoogleSignIn } from '@/firebase';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
-import { Card, CardContent } from "@/components/ui/card";
-import { Search } from "lucide-react";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { UserNav } from "@/components/dashboard/user-nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import Link from 'next/link';
+import AnimatedBackground from '@/components/ui/animated-background';
 
-export default function Home() {
+function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...props} viewBox="0 0 48 48" width="24" height="24">
+        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C39.999,35.596,44,30.023,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+    </svg>
+  );
+}
+
+
+export default function LoginPage() {
+  const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const [packets, setPackets] = useState<Packet[]>([]);
-  const [selectedPacket, setSelectedPacket] = useState<Packet | null>(null);
-  const [isCapturing, setIsCapturing] = useState<boolean>(true);
-  const [filter, setFilter] = useState<string>("");
-  const isMobile = useIsMobile();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
-  
-  useEffect(() => {
-    // Pre-populate with a few packets
-    setPackets(Array.from({ length: 20 }, generateMockPacket));
-  }, []);
 
-  useEffect(() => {
-    if (!isCapturing) {
-      return;
-    }
-    const intervalId = setInterval(() => {
-      setPackets((prev) =>
-        [generateMockPacket(), ...prev].slice(0, 200)
-      );
-    }, 1200);
-
-    return () => clearInterval(intervalId);
-  }, [isCapturing]);
-
-  const handleToggleCapture = useCallback(() => {
-    setIsCapturing((prev) => !prev);
-  }, []);
-
-  const handleClear = useCallback(() => {
-    setPackets([]);
-    setSelectedPacket(null);
-  }, []);
-
-  const handleExport = useCallback(() => {
-    const dataStr = JSON.stringify(packets, null, 2);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
-    const exportFileDefaultName = "packet_capture.json";
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
-    linkElement.click();
-  }, [packets]);
-
-  const filteredPackets = useMemo(() => {
-    if (!filter) return packets;
-    return packets.filter((p) => {
-      const searchStr = `${p.src} ${p.dst} ${p.protocol} ${p.summary}`.toLowerCase();
-      return searchStr.includes(filter.toLowerCase());
-    });
-  }, [packets, filter]);
-
-  const handleSelectPacket = useCallback((packet: Packet) => {
-    setSelectedPacket(packet);
-  }, []);
-  
-  const handleSheetOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      setSelectedPacket(null);
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      // We don't await this, the auth state listener in the provider will handle the redirect
+      initiateEmailSignIn(auth, email, password);
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
-  const MainContent = () => (
-    <div className="md:w-3/5 flex flex-col gap-4">
-      <PacketTable
-        packets={filteredPackets}
-        selectedPacket={selectedPacket}
-        onSelectPacket={handleSelectPacket}
-      />
-    </div>
-  );
+  const handleGoogleSignIn = () => {
+    setError(null);
+    // initiateGoogleSignIn handles its own errors internally.
+    initiateGoogleSignIn(auth);
+    // The onAuthStateChanged listener in FirebaseProvider will redirect on success.
+  };
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || user) {
     return (
-       <div className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <Logo />
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold">Packet Detective</h1>
-          </div>
-        </header>
-        <main className="flex-1 p-4 md:p-6">
-          <div className="flex justify-center items-center h-full">
-             <Skeleton className="h-96 w-full" />
-          </div>
-        </main>
+      <div className="flex items-center justify-center min-h-screen bg-background relative overflow-hidden">
+        <AnimatedBackground />
+        <p>Loading...</p>
       </div>
-    )
+    );
   }
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
-          <Logo />
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold">Packet Detective</h1>
+    <div className="flex items-center justify-center min-h-screen bg-background relative overflow-hidden">
+      <AnimatedBackground />
+      <Card className="w-full max-w-sm animate-in fade-in-0 slide-in-from-bottom-12 duration-500 z-10 bg-card/80 backdrop-blur-sm">
+        <CardHeader className="space-y-1 text-center">
+          <div className='flex justify-center pb-4'>
+            <Logo />
           </div>
-          <div className="flex items-center gap-4">
-            <Toolbar
-              isCapturing={isCapturing}
-              onToggleCapture={handleToggleCapture}
-              onClear={handleClear}
-              onExport={handleExport}
-              filter={filter}
-              onFilterChange={setFilter}
-            />
-            <UserNav />
-          </div>
-        </header>
-        <main className="flex-1 p-4 md:p-6 flex flex-col md:flex-row gap-6">
-          {isMobile ? (
-            <>
-              <MainContent />
-              <Sheet open={!!selectedPacket} onOpenChange={handleSheetOpenChange}>
-                <SheetContent side="bottom" className="h-[85vh] p-0 border-t">
-                  {selectedPacket && <PacketDetail packet={selectedPacket} />}
-                </SheetContent>
-              </Sheet>
-            </>
-          ) : (
-            <>
-              <MainContent />
-              <div className="md:w-2/5 flex flex-col">
-                {selectedPacket ? (
-                  <PacketDetail packet={selectedPacket} />
-                ) : (
-                  <Card className="flex-1 flex items-center justify-center">
-                    <CardContent className="p-6 text-center text-muted-foreground">
-                      <Search className="mx-auto h-12 w-12" />
-                      <h3 className="mt-4 text-lg font-medium">No Packet Selected</h3>
-                      <p className="mt-1 text-sm">
-                        Click on a packet in the table to see its details and threat analysis.
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
+          <CardTitle className="text-2xl">Welcome Back</CardTitle>
+          <CardDescription>Sign in to your account</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+            <div className="grid grid-cols-1 gap-2">
+                 <Button variant="outline" onClick={handleGoogleSignIn}>
+                    <GoogleIcon className="mr-2 h-4 w-4" />
+                    Sign in with Google
+                </Button>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
               </div>
-            </>
-          )}
-        </main>
-      </div>
-    </TooltipProvider>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card/80 px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+            <form onSubmit={handleSignIn} className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              {error && <p className="text-destructive text-sm text-center">{error}</p>}
+               <Button className="w-full" type="submit">
+                Sign In with Email
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4">
+            <p className="text-sm text-center text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="underline">
+                Sign up
+              </Link>
+            </p>
+          </CardFooter>
+      </Card>
+    </div>
   );
 }

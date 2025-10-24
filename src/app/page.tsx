@@ -10,16 +10,19 @@ import { Logo } from "@/components/logo";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Home() {
   const [packets, setPackets] = useState<Packet[]>([]);
   const [selectedPacket, setSelectedPacket] = useState<Packet | null>(null);
   const [isCapturing, setIsCapturing] = useState<boolean>(true);
   const [filter, setFilter] = useState<string>("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Pre-populate with a few packets
-    setPackets(Array.from({ length: 10 }, generateMockPacket));
+    setPackets(Array.from({ length: 20 }, generateMockPacket));
   }, []);
 
   useEffect(() => {
@@ -66,6 +69,22 @@ export default function Home() {
   const handleSelectPacket = useCallback((packet: Packet) => {
     setSelectedPacket(packet);
   }, []);
+  
+  const handleSheetOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setSelectedPacket(null);
+    }
+  };
+
+  const MainContent = () => (
+    <div className="md:w-3/5 flex flex-col gap-4">
+      <PacketTable
+        packets={filteredPackets}
+        selectedPacket={selectedPacket}
+        onSelectPacket={handleSelectPacket}
+      />
+    </div>
+  );
 
   return (
     <TooltipProvider>
@@ -87,28 +106,35 @@ export default function Home() {
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6 flex flex-col md:flex-row gap-6">
-          <div className="md:w-3/5 flex flex-col gap-4">
-            <PacketTable
-              packets={filteredPackets}
-              selectedPacket={selectedPacket}
-              onSelectPacket={handleSelectPacket}
-            />
-          </div>
-          <div className="md:w-2/5 flex flex-col">
-            {selectedPacket ? (
-              <PacketDetail packet={selectedPacket} />
-            ) : (
-              <Card className="flex-1 flex items-center justify-center">
-                <CardContent className="p-6 text-center text-muted-foreground">
-                  <Search className="mx-auto h-12 w-12" />
-                  <h3 className="mt-4 text-lg font-medium">No Packet Selected</h3>
-                  <p className="mt-1 text-sm">
-                    Click on a packet in the table to see its details and threat analysis.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {isMobile ? (
+            <>
+              <MainContent />
+              <Sheet open={!!selectedPacket} onOpenChange={handleSheetOpenChange}>
+                <SheetContent side="bottom" className="h-[85vh] p-0 border-t">
+                  {selectedPacket && <PacketDetail packet={selectedPacket} />}
+                </SheetContent>
+              </Sheet>
+            </>
+          ) : (
+            <>
+              <MainContent />
+              <div className="md:w-2/5 flex flex-col">
+                {selectedPacket ? (
+                  <PacketDetail packet={selectedPacket} />
+                ) : (
+                  <Card className="flex-1 flex items-center justify-center">
+                    <CardContent className="p-6 text-center text-muted-foreground">
+                      <Search className="mx-auto h-12 w-12" />
+                      <h3 className="mt-4 text-lg font-medium">No Packet Selected</h3>
+                      <p className="mt-1 text-sm">
+                        Click on a packet in the table to see its details and threat analysis.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </>
+          )}
         </main>
       </div>
     </TooltipProvider>

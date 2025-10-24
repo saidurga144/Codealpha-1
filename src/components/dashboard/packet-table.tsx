@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Globe, Dna, ArrowRightLeft, Waves, AlertTriangle, HelpCircle } from "lucide-react";
@@ -39,14 +39,17 @@ export function PacketTable({
 }) {
   return (
     <Card className="h-full flex-1 flex flex-col">
-      <CardContent className="p-0 flex-1 flex flex-col">
+       <CardHeader className="p-4 md:p-6">
+        <CardTitle>Live Packet Capture</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 flex-1 flex flex-col min-h-[400px] md:min-h-0">
         <ScrollArea className="flex-1">
           <Table>
             <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm">
               <TableRow>
-                <TableHead className="w-[180px]">Timestamp</TableHead>
+                <TableHead className="w-[100px] md:w-[180px]">Timestamp</TableHead>
                 <TableHead>Source</TableHead>
-                <TableHead>Destination</TableHead>
+                <TableHead className="hidden md:table-cell">Destination</TableHead>
                 <TableHead className="w-[100px] text-center">Protocol</TableHead>
                 <TableHead className="w-[100px] text-right">Length</TableHead>
               </TableRow>
@@ -62,13 +65,14 @@ export function PacketTable({
                   )}
                 >
                   <TableCell className="font-mono text-xs">{packet.timestamp}</TableCell>
-                  <TableCell className="font-mono text-xs">{packet.src}</TableCell>
-                  <TableCell className="font-mono text-xs">{packet.dst}</TableCell>
+                  <TableCell className="font-mono text-xs truncate max-w-[120px] md:max-w-none">{packet.src}</TableCell>
+                  <TableCell className="font-mono text-xs hidden md:table-cell truncate max-w-[120px] md:max-w-none">{packet.dst}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-2">
                       {getProtocolIcon(packet.protocol)}
-                      <span className="text-xs">{packet.protocol}</span>
+                      <span className="text-xs hidden sm:inline">{packet.protocol}</span>
                     </div>
+
                   </TableCell>
                   <TableCell className="text-right font-mono text-xs">{packet.length}</TableCell>
                 </TableRow>

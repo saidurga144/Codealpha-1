@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Globe, Dna, ArrowRightLeft, Waves, AlertTriangle, HelpCircle } from "lucide-react";
 
@@ -43,13 +43,13 @@ export function PacketTable({
         <CardTitle>Live Packet Capture</CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1 flex flex-col min-h-[400px] md:min-h-0">
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 whitespace-nowrap">
           <Table>
             <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm">
               <TableRow>
-                <TableHead className="w-[100px] md:w-[180px]">Timestamp</TableHead>
+                <TableHead className="w-[180px]">Timestamp</TableHead>
                 <TableHead>Source</TableHead>
-                <TableHead className="hidden md:table-cell">Destination</TableHead>
+                <TableHead>Destination</TableHead>
                 <TableHead className="w-[100px] text-center">Protocol</TableHead>
                 <TableHead className="w-[100px] text-right">Length</TableHead>
               </TableRow>
@@ -65,8 +65,8 @@ export function PacketTable({
                   )}
                 >
                   <TableCell className="font-mono text-xs">{packet.timestamp}</TableCell>
-                  <TableCell className="font-mono text-xs truncate max-w-[120px] md:max-w-none">{packet.src}</TableCell>
-                  <TableCell className="font-mono text-xs hidden md:table-cell truncate max-w-[120px] md:max-w-none">{packet.dst}</TableCell>
+                  <TableCell className="font-mono text-xs">{packet.src}</TableCell>
+                  <TableCell className="font-mono text-xs">{packet.dst}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-2">
                       {getProtocolIcon(packet.protocol)}
@@ -84,6 +84,8 @@ export function PacketTable({
               No packets captured yet.
             </div>
           )}
+           <ScrollBar orientation="vertical" />
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </CardContent>
     </Card>
